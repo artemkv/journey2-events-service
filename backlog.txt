@@ -1,8 +1,11 @@
 - read port from config / env variable
 - proper ceremony for running server
 - graceful shutdown
-
 - /health
+- CORS
+
+-----------------------------------------------
+
 - /liveness
 - /readiness
 
@@ -16,5 +19,3 @@
 - handle 4XX errors
 - handle 5XX errors
 - logging (successful and failed requests)
-
-- CORS
