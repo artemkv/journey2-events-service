@@ -1,0 +1,20 @@
+- read port from config / env variable
+- proper ceremony for running server
+- graceful shutdown
+
+- /health
+- /liveness
+- /readiness
+
+- serve favicon
+- update rest stats
+    - countRequest
+    - countRequestByEndpoint
+    - updateResponseStats
+- /stats to get rest stats
+
+- handle 4XX errors
+- handle 5XX errors
+- logging (successful and failed requests)
+
+- CORS
