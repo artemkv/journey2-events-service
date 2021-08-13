@@ -1,6 +1,31 @@
-Journey Events Service
+# Journey2 Events Service
 
-# API
+## Build, run and test
+
+Run unit-tests
+
+```
+make test
+```
+
+Run integration tests (The app needs to be running!)
+```
+make integration_test
+```
+
+Run the project
+
+```
+make run
+```
+
+## Environment Variables
+
+```
+JOURNEY2_PORT=:8600
+```
+
+## API
 
 ```
 POST /action
@@ -19,9 +44,3 @@ Pre-defined actions:
 - act_begin_signup - click on signup link and sees the signup form
 - act_complete_signup - completes signup
 - act_payment - makes a single payment
-
-# Environment Variables
-
-```
-JOURNEY2_PORT=:8600
-```

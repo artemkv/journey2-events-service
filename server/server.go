@@ -11,23 +11,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Starts serving requests on a specified port with graceful shutdown support
+// Blocks the calling thread
 // port is a string in Gin format, e.g. ":8600"
-func Serve(port string) {
-	router := gin.Default() // logging and recovery attached
-	setupRouter(router)
+//    when port is an empty string, serves on default HTTP port
+// callback is called after the server has been setup to serve
+//    callback is passed the actual port the server is listening on
+func Serve(router *gin.Engine, port string, callback func()) {
+	// based on example from https://github.com/gin-gonic/examples
+	ctx, restoreInterrupt := getNotifyContextForInterruptSignals()
+	defer restoreInterrupt()
 
-	serveWithShutdownSupport(router, port)
-}
-
-// based on example from https://github.com/gin-gonic/examples
-func serveWithShutdownSupport(router *gin.Engine, port string) {
-	ctx, cancel := getNotifyContextForInterruptSignals()
-	defer cancel()
-
-	httpServer := startListeningAsync(router, port)
+	httpServer := startServingAsync(router, port)
+	if callback != nil {
+		callback()
+	}
 
 	waitForInterruptSignal(ctx)
-	cancel() // restore default behavior on the interrupt signal
+	restoreInterrupt()
 	shutDownWithTimeout(httpServer, 5*time.Second)
 }
 
@@ -39,16 +40,18 @@ func waitForInterruptSignal(ctx context.Context) {
 	<-ctx.Done()
 }
 
-func startListeningAsync(router *gin.Engine, port string) http.Server {
+func startServingAsync(router *gin.Engine, port string) http.Server {
+	log.Printf("Starting server on port %s", port)
+
 	httpServer := http.Server{
 		Addr:    port,
 		Handler: router,
 	}
 
-	log.Printf("Starting listening on port %s", port)
 	go func() {
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error listening: %s\n", err)
+		err := httpServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Error serving: %s\n", err)
 		}
 	}()
 

@@ -2,12 +2,11 @@
 - proper ceremony for running server
 - graceful shutdown
 - /health
+- /liveness
+- /readiness
 - CORS
 
 -----------------------------------------------
-
-- /liveness
-- /readiness
 
 - serve favicon
 - update rest stats

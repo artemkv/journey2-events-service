@@ -4,25 +4,33 @@ import (
 	"log"
 	"os"
 
+	"artemkv.net/journey2/app"
+	"artemkv.net/journey2/health"
 	"artemkv.net/journey2/server"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	loadDotEnv()
-	port := getPort(":8600")
+	LoadDotEnv()
+	port := GetPort(":8600")
 
-	server.Serve(port)
+	router := gin.Default() // logging and recovery attached
+	app.SetupRouter(router)
+
+	server.Serve(router, port, func() {
+		health.SetIsReadyGlobally()
+	})
 }
 
-func loadDotEnv() {
+func LoadDotEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(err)
 	}
 }
 
-func getPort(def string) string {
+func GetPort(def string) string {
 	port := os.Getenv("JOURNEY2_PORT")
 	if port == "" {
 		log.Printf("Using default port %s\n", def)
