@@ -19,6 +19,12 @@ Run the project
 make run
 ```
 
+Run project with live updates while developing
+
+```
+gowatch
+```
+
 ## Environment Variables
 
 ```
