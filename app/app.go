@@ -9,6 +9,8 @@ import (
 func SetupRouter(router *gin.Engine) {
 	router.Use(cors.Default()) // allow all origins
 
+	router.StaticFile("/favicon.ico", "./resources/favicon.ico")
+
 	router.GET("/health", health.HandleHealthCheck)
 	router.GET("/liveness", health.HandleLivenessCheck)
 	router.GET("/readiness", health.HandleReadinessCheck)

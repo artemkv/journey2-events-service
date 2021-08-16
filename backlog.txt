@@ -5,10 +5,10 @@
 - /liveness
 - /readiness
 - CORS
+- serve favicon
 
 -----------------------------------------------
 
-- serve favicon
 - update rest stats
     - countRequest
     - countRequestByEndpoint
