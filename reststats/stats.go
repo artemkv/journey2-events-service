@@ -1,12 +1,16 @@
 package reststats
 
+import "time"
+
 type statsData struct {
+	started            time.Time
 	requestTotal       int
 	requestsByEndpoint map[string]int
 	responseStats      map[string]int
 }
 
 var stats = &statsData{
+	started:            time.Now(),
 	requestTotal:       0,
 	requestsByEndpoint: map[string]int{},
 	responseStats: map[string]int{
