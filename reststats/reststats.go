@@ -9,6 +9,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var version string = ""
+
+func SetVersion(v string) {
+	version = v
+}
+
 func CountRequestByEndpoint(endpoint string) {
 	countRequestByEndpoint(endpoint)
 }
@@ -24,6 +30,7 @@ func RequestCounter() gin.HandlerFunc {
 }
 
 type statsResult struct {
+	Version            string         `json:"version"`
 	Uptime             string         `json:"uptime"`
 	RequestsTotal      int            `json:"requests_total"`
 	RequestsByEndpoint map[string]int `json:"requests_by_endpoint"`
@@ -34,6 +41,7 @@ func HandleGetStats(c *gin.Context) {
 	stats = getStats()
 
 	result := &statsResult{
+		Version:            version,
 		Uptime:             getTimeDiffFormatted(stats.started, time.Now()),
 		RequestsTotal:      stats.requestTotal,
 		RequestsByEndpoint: stats.requestsByEndpoint,

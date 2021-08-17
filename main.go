@@ -9,10 +9,13 @@ import (
 
 	"artemkv.net/journey2/app"
 	"artemkv.net/journey2/health"
+	"artemkv.net/journey2/reststats"
 	"artemkv.net/journey2/server"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
+
+var version = "1.0"
 
 func main() {
 	log.SetFormatter(&logrus.JSONFormatter{
@@ -24,6 +27,8 @@ func main() {
 
 	router := gin.New()
 	app.SetupRouter(router)
+
+	reststats.SetVersion(version)
 
 	server.Serve(router, port, func() {
 		health.SetIsReadyGlobally()
