@@ -8,6 +8,7 @@
 - serve favicon
 - handle 4XX errors
 - handle 5XX errors
+- logging (successful and failed requests)
 
 -----------------------------------------------
 
@@ -16,5 +17,3 @@
     - countRequestByEndpoint
     - updateResponseStats
 - /stats to get rest stats
-
-- logging (successful and failed requests)

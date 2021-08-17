@@ -1,7 +1,10 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 
 	"artemkv.net/journey2/health"
 	"github.com/gin-contrib/cors"
@@ -9,8 +12,8 @@ import (
 )
 
 func SetupRouter(router *gin.Engine) {
-	router.Use(gin.Logger()) // use default logging
-	router.Use(gin.CustomRecovery(customRecovery))
+	router.Use(requestLogger(log.StandardLogger()))
+	router.Use(gin.CustomRecovery(recover))
 	router.Use(cors.Default()) // allow all origins
 
 	router.StaticFile("/favicon.ico", "./resources/favicon.ico")
@@ -39,11 +42,22 @@ func toInternalServerError(c *gin.Context, errText string) {
 	c.JSON(http.StatusInternalServerError, gin.H{"err": errText})
 }
 
-func customRecovery(c *gin.Context, err interface{}) {
+func recover(c *gin.Context, err interface{}) {
 	if errText, ok := err.(string); ok {
 		toInternalServerError(c, errText)
 	}
 	c.AbortWithStatus(http.StatusInternalServerError)
+}
+
+func requestLogger(logger *log.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		message := fmt.Sprintf("%d %s %s",
+			c.Writer.Status(),
+			c.Request.Method,
+			c.Request.URL.Path)
+
+		logger.Info(message)
+	}
 }
 
 func handleError(c *gin.Context) {

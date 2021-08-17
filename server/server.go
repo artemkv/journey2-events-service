@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 )
