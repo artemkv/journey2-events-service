@@ -15,7 +15,7 @@ func main() {
 	LoadDotEnv()
 	port := GetPort(":8600")
 
-	router := gin.Default() // logging and recovery attached
+	router := gin.New()
 	app.SetupRouter(router)
 
 	server.Serve(router, port, func() {

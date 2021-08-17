@@ -6,6 +6,8 @@
 - /readiness
 - CORS
 - serve favicon
+- handle 4XX errors
+- handle 5XX errors
 
 -----------------------------------------------
 
@@ -15,6 +17,4 @@
     - updateResponseStats
 - /stats to get rest stats
 
-- handle 4XX errors
-- handle 5XX errors
 - logging (successful and failed requests)

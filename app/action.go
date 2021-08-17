@@ -1,0 +1,23 @@
+package app
+
+import (
+	"github.com/gin-gonic/gin"
+)
+
+type actionData struct {
+	AppId  string `json:"aid" binding:"required"`
+	UserId string `json:"uid" binding:"required"`
+	Action string `json:"act" binding:"required"`
+	Param  string `json:"par"`
+}
+
+func handleAction(c *gin.Context) {
+	var action actionData
+	if err := c.ShouldBindJSON(&action); err != nil {
+		toBadRequest(c, err)
+		return
+	}
+
+	// TODO: now simply returns input
+	toSuccess(c, action)
+}
