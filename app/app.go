@@ -7,27 +7,37 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"artemkv.net/journey2/health"
+	"artemkv.net/journey2/reststats"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter(router *gin.Engine) {
+	// setup logger, recover and CORS
 	router.Use(requestLogger(log.StandardLogger()))
 	router.Use(gin.CustomRecovery(recover))
 	router.Use(cors.Default()) // allow all origins
 
+	// favicon
 	router.StaticFile("/favicon.ico", "./resources/favicon.ico")
 
+	// update stats
+	router.Use(reststats.RequestCounter())
+
+	// used for testing / health checks
 	router.GET("/health", health.HandleHealthCheck)
 	router.GET("/liveness", health.HandleLivenessCheck)
 	router.GET("/readiness", health.HandleReadinessCheck)
 	router.GET("/error", handleError)
 
-	router.POST("/action", handleAction)
+	// stats
+	router.GET("/stats", reststats.HandleGetStats)
 
-	router.NoRoute(func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, gin.H{"err": "Not found"})
-	})
+	// do business
+	router.POST("/action", handlePostAction)
+
+	// handle 404
+	router.NoRoute(notFoundHandler())
 }
 
 func toSuccess(c *gin.Context, data interface{}) {
@@ -57,6 +67,12 @@ func requestLogger(logger *log.Logger) gin.HandlerFunc {
 			c.Request.URL.Path)
 
 		logger.Info(message)
+	}
+}
+
+func notFoundHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{"err": "Not found"})
 	}
 }
 
