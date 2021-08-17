@@ -57,6 +57,9 @@ func recover(c *gin.Context, err interface{}) {
 		toInternalServerError(c, errText)
 	}
 	c.AbortWithStatus(http.StatusInternalServerError)
+
+	// stats
+	reststats.UpdateResponseStats(c.Writer.Status())
 }
 
 func requestLogger(logger *log.Logger) gin.HandlerFunc {
@@ -73,6 +76,9 @@ func requestLogger(logger *log.Logger) gin.HandlerFunc {
 func notFoundHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"err": "Not found"})
+
+		// stats
+		reststats.UpdateResponseStats(c.Writer.Status())
 	}
 }
 

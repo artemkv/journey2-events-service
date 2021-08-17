@@ -19,9 +19,10 @@ func handlePostAction(c *gin.Context) {
 		return
 	}
 
-	reststats.CountRequestByEndpoint("action")
-	reststats.UpdateResponseStats()
-
 	// TODO: now simply returns input
 	toSuccess(c, action)
+
+	// stats
+	reststats.CountRequestByEndpoint("action")
+	reststats.UpdateResponseStats(c.Writer.Status())
 }
