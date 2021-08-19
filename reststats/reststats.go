@@ -30,22 +30,25 @@ func RequestCounter() gin.HandlerFunc {
 }
 
 type statsResult struct {
-	Version            string         `json:"version"`
-	Uptime             string         `json:"uptime"`
-	RequestsTotal      int            `json:"requests_total"`
-	RequestsByEndpoint map[string]int `json:"requests_by_endpoint"`
-	ResponseStats      map[string]int `json:"responses_all"`
+	Version              string         `json:"version"`
+	Uptime               string         `json:"uptime"`
+	TimeSinceLastRequest string         `json:"time_since_last_request"`
+	RequestsTotal        int            `json:"requests_total"`
+	RequestsByEndpoint   map[string]int `json:"requests_by_endpoint"`
+	ResponseStats        map[string]int `json:"responses_all"`
 }
 
 func HandleGetStats(c *gin.Context) {
 	stats = getStats()
+	now := time.Now()
 
 	result := &statsResult{
-		Version:            version,
-		Uptime:             getTimeDiffFormatted(stats.started, time.Now()),
-		RequestsTotal:      stats.requestTotal,
-		RequestsByEndpoint: stats.requestsByEndpoint,
-		ResponseStats:      stats.responseStats,
+		Version:              version,
+		Uptime:               getTimeDiffFormatted(stats.started, now),
+		TimeSinceLastRequest: getTimeDiffFormatted(stats.previousRequestTime, now),
+		RequestsTotal:        stats.requestTotal,
+		RequestsByEndpoint:   stats.requestsByEndpoint,
+		ResponseStats:        stats.responseStats,
 	}
 
 	c.JSON(http.StatusOK, result)

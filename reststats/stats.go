@@ -3,10 +3,12 @@ package reststats
 import "time"
 
 type statsData struct {
-	started            time.Time
-	requestTotal       int
-	requestsByEndpoint map[string]int
-	responseStats      map[string]int
+	started             time.Time
+	requestTotal        int
+	requestsByEndpoint  map[string]int
+	responseStats       map[string]int
+	currentRequestTime  time.Time
+	previousRequestTime time.Time
 }
 
 var stats = &statsData{
@@ -20,6 +22,8 @@ var stats = &statsData{
 		"4XX": 0,
 		"5XX": 0,
 	},
+	currentRequestTime:  time.Now(),
+	previousRequestTime: time.Now(),
 }
 
 func getStats() *statsData {
@@ -28,6 +32,8 @@ func getStats() *statsData {
 
 func countRequest() {
 	stats.requestTotal++
+	stats.previousRequestTime = stats.currentRequestTime
+	stats.currentRequestTime = time.Now()
 }
 
 func countRequestByEndpoint(endpoint string) {
