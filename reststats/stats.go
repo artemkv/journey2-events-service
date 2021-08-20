@@ -3,15 +3,17 @@ package reststats
 import "time"
 
 var CURIOSITY = 1000
+var QUICK_SEQUENCE_SIZE = 100
 
 type statsData struct {
-	started             time.Time
-	requestTotal        int
-	requestsByEndpoint  map[string]int
-	responseStats       map[string]int
-	currentRequestTime  time.Time
-	previousRequestTime time.Time
-	history             []*responseStatsData
+	started                  time.Time
+	requestTotal             int
+	requestsByEndpoint       map[string]int
+	responseStats            map[string]int
+	currentRequestTime       time.Time
+	previousRequestTime      time.Time
+	history                  []*responseStatsData
+	shortestSequenceDuration time.Duration
 }
 
 type responseStatsData struct {
@@ -22,13 +24,14 @@ type responseStatsData struct {
 }
 
 var stats = &statsData{
-	started:             time.Now(),
-	requestTotal:        0,
-	requestsByEndpoint:  map[string]int{},
-	responseStats:       getEmptyCountsByStatusCodeMap(),
-	currentRequestTime:  time.Now(),
-	previousRequestTime: time.Now(),
-	history:             make([]*responseStatsData, 0, CURIOSITY),
+	started:                  time.Now(),
+	requestTotal:             0,
+	requestsByEndpoint:       map[string]int{},
+	responseStats:            getEmptyCountsByStatusCodeMap(),
+	currentRequestTime:       time.Now(),
+	previousRequestTime:      time.Now(),
+	history:                  make([]*responseStatsData, 0, CURIOSITY),
+	shortestSequenceDuration: -1,
 }
 
 func getStats() *statsData {
@@ -66,6 +69,14 @@ func updateResponseStats(start time.Time, url string, statusCode int, duration t
 	stats.history = append(stats.history, responseStats)
 
 	updateCountsByStatusCodeMap(stats.responseStats, statusCode)
+
+	if len(stats.history) >= QUICK_SEQUENCE_SIZE {
+		lastSequenceDuration := stats.history[len(stats.history)-1].time.Sub(
+			stats.history[len(stats.history)-QUICK_SEQUENCE_SIZE].time)
+		if stats.shortestSequenceDuration == -1 || stats.shortestSequenceDuration > lastSequenceDuration {
+			stats.shortestSequenceDuration = lastSequenceDuration
+		}
+	}
 }
 
 func getEmptyCountsByStatusCodeMap() map[string]int {

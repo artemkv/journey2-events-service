@@ -51,14 +51,15 @@ func RequestCounter() gin.HandlerFunc {
 }
 
 type statsResult struct {
-	Version              string              `json:"version"`
-	Uptime               string              `json:"uptime"`
-	TimeSinceLastRequest string              `json:"time_since_last_request"`
-	RequestsTotal        int                 `json:"requests_total"`
-	RequestsByEndpoint   map[string]int      `json:"requests_by_endpoint"`
-	ResponsesAll         map[string]int      `json:"responses_all"`
-	ResponsesLast1000    map[string]int      `json:"responses_last_1000"`
-	RequestsLast10       []*requestStatsData `json:"requests_last_10"`
+	Version                             string              `json:"version"`
+	Uptime                              string              `json:"uptime"`
+	TimeSinceLastRequest                string              `json:"time_since_last_request"`
+	RequestsTotal                       int                 `json:"requests_total"`
+	RequestsByEndpoint                  map[string]int      `json:"requests_by_endpoint"`
+	ShortestInterval100RequestsReceived string              `json:"shortest_interval_100_requests_received"`
+	ResponsesAll                        map[string]int      `json:"responses_all"`
+	ResponsesLast1000                   map[string]int      `json:"responses_last_1000"`
+	RequestsLast10                      []*requestStatsData `json:"requests_last_10"`
 }
 
 type requestStatsData struct {
@@ -81,10 +82,10 @@ func HandleGetStats(c *gin.Context) {
 		RequestsTotal:        stats.requestTotal,
 		RequestsByEndpoint:   stats.requestsByEndpoint,
 		// TODO: last_1000_requests
-		// TODO: shortest_interval_100_requests_received
-		ResponsesAll:      stats.responseStats,
-		ResponsesLast1000: responsesHistory,
-		RequestsLast10:    requestsLast10,
+		ShortestInterval100RequestsReceived: getTimeIntervalFormatted(stats.shortestSequenceDuration),
+		ResponsesAll:                        stats.responseStats,
+		ResponsesLast1000:                   responsesHistory,
+		RequestsLast10:                      requestsLast10,
 		// TODO: failed_requests_last_10
 		// TODO: slow_requests_last_10
 	}
