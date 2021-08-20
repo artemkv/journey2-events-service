@@ -1,7 +1,6 @@
 package app
 
 import (
-	"artemkv.net/journey2/reststats"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,8 +20,4 @@ func handlePostAction(c *gin.Context) {
 
 	// TODO: now simply returns input
 	toSuccess(c, action)
-
-	// stats
-	reststats.CountRequestByEndpoint("action")
-	reststats.UpdateResponseStats(c.Writer.Status())
 }

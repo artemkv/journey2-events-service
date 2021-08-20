@@ -19,8 +19,29 @@ func CountRequestByEndpoint(endpoint string) {
 	countRequestByEndpoint(endpoint)
 }
 
-func UpdateResponseStats(statusCode int) {
-	updateResponseStats(statusCode)
+func HandleEndpointWithStats(handler gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		handler(c)
+		duration := time.Since(start)
+
+		countRequestByEndpoint(c.Request.URL.Path)
+		updateResponseStats(start, c.Request.RequestURI, c.Writer.Status(), duration)
+	}
+}
+
+func HandleWithStats(handler gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		handler(c)
+		duration := time.Since(start)
+
+		updateResponseStats(start, c.Request.RequestURI, c.Writer.Status(), duration)
+	}
+}
+
+func UpdateResponseStatsOnRecover(start time.Time, url string, statusCode int) {
+	updateResponseStats(start, url, statusCode, 0)
 }
 
 func RequestCounter() gin.HandlerFunc {
@@ -30,17 +51,26 @@ func RequestCounter() gin.HandlerFunc {
 }
 
 type statsResult struct {
-	Version              string         `json:"version"`
-	Uptime               string         `json:"uptime"`
-	TimeSinceLastRequest string         `json:"time_since_last_request"`
-	RequestsTotal        int            `json:"requests_total"`
-	RequestsByEndpoint   map[string]int `json:"requests_by_endpoint"`
-	ResponseStats        map[string]int `json:"responses_all"`
+	Version              string              `json:"version"`
+	Uptime               string              `json:"uptime"`
+	TimeSinceLastRequest string              `json:"time_since_last_request"`
+	RequestsTotal        int                 `json:"requests_total"`
+	RequestsByEndpoint   map[string]int      `json:"requests_by_endpoint"`
+	ResponsesAll         map[string]int      `json:"responses_all"`
+	RequestsLast10       []*requestStatsData `json:"requests_last_10"`
+}
+
+type requestStatsData struct {
+	Url        string        `json:"url"`
+	StatusCode int           `json:"statusCode"`
+	Duration   time.Duration `json:"duration"`
 }
 
 func HandleGetStats(c *gin.Context) {
 	stats = getStats()
 	now := time.Now()
+
+	requestsLast10 := getLast10Requests(stats.history)
 
 	result := &statsResult{
 		Version:              version,
@@ -48,13 +78,16 @@ func HandleGetStats(c *gin.Context) {
 		TimeSinceLastRequest: getTimeDiffFormatted(stats.previousRequestTime, now),
 		RequestsTotal:        stats.requestTotal,
 		RequestsByEndpoint:   stats.requestsByEndpoint,
-		ResponseStats:        stats.responseStats,
+		// TODO: last_1000_requests
+		// TODO: shortest_interval_100_requests_received
+		ResponsesAll: stats.responseStats,
+		// TODO: responses_last_1000
+		RequestsLast10: requestsLast10,
+		// TODO: failed_requests_last_10
+		// TODO: slow_requests_last_10
 	}
 
 	c.JSON(http.StatusOK, result)
-
-	CountRequestByEndpoint("stats")
-	UpdateResponseStats(c.Writer.Status())
 }
 
 func getTimeDiffFormatted(start time.Time, end time.Time) string {
@@ -80,4 +113,23 @@ func getTimeIntervalFormatted(duration time.Duration) string {
 	seconds := math.Floor(diff)
 
 	return fmt.Sprintf("%d.%d:%d:%d", int(days), int(hours), int(minutes), int(seconds))
+}
+
+func getLast10Requests(history []*responseStatsData) []*requestStatsData {
+	requestsLast10 := make([]*requestStatsData, 0, 10)
+	if len(history) > 0 {
+		idx := len(history) - 10
+		if idx < 0 {
+			idx = 0
+		}
+		for _, v := range history[idx:] {
+			requestsLast10 = append(requestsLast10,
+				&requestStatsData{
+					Url:        v.url,
+					StatusCode: v.statusCode,
+					Duration:   v.duration,
+				})
+		}
+	}
+	return requestsLast10
 }

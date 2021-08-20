@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -31,13 +32,13 @@ func SetupRouter(router *gin.Engine) {
 	router.GET("/error", handleError)
 
 	// stats
-	router.GET("/stats", reststats.HandleGetStats)
+	router.GET("/stats", reststats.HandleEndpointWithStats(reststats.HandleGetStats))
 
 	// do business
-	router.POST("/action", handlePostAction)
+	router.POST("/action", reststats.HandleEndpointWithStats(handlePostAction))
 
 	// handle 404
-	router.NoRoute(notFoundHandler())
+	router.NoRoute(reststats.HandleWithStats(notFoundHandler()))
 }
 
 func toSuccess(c *gin.Context, data interface{}) {
@@ -58,8 +59,8 @@ func recover(c *gin.Context, err interface{}) {
 	}
 	c.AbortWithStatus(http.StatusInternalServerError)
 
-	// stats
-	reststats.UpdateResponseStats(c.Writer.Status())
+	reststats.UpdateResponseStatsOnRecover(
+		time.Now(), c.Request.RequestURI, http.StatusInternalServerError)
 }
 
 func requestLogger(logger *log.Logger) gin.HandlerFunc {
@@ -76,9 +77,6 @@ func requestLogger(logger *log.Logger) gin.HandlerFunc {
 func notFoundHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"err": "Not found"})
-
-		// stats
-		reststats.UpdateResponseStats(c.Writer.Status())
 	}
 }
 
