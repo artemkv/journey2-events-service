@@ -61,12 +61,13 @@ type statsResult struct {
 	ResponsesLast1000                   map[string]int      `json:"responses_last_1000"`
 	RequestsLast10                      []*requestStatsData `json:"requests_last_10"`
 	FailedRequestsLast10                []*requestStatsData `json:"failed_requests_last_10"`
+	SlowRequestsLast10                  []*requestStatsData `json:"slow_requests_last_10"`
 }
 
 type requestStatsData struct {
-	Url        string        `json:"url"`
-	StatusCode int           `json:"statusCode"`
-	Duration   time.Duration `json:"duration"`
+	Url        string `json:"url"`
+	StatusCode int    `json:"statusCode"`
+	Duration   string `json:"duration"`
 }
 
 func HandleGetStats(c *gin.Context) {
@@ -76,6 +77,7 @@ func HandleGetStats(c *gin.Context) {
 	responsesHistory := getResponseHistory(stats.history)
 	requestsLast10 := getLast10Requests(stats.history)
 	failedRequestsLast10 := getLast10Requests(stats.historyOfFailed)
+	slowRequestsLast10 := getLast10Requests(stats.historyOfSlow)
 
 	result := &statsResult{
 		Version:              version,
@@ -89,7 +91,7 @@ func HandleGetStats(c *gin.Context) {
 		ResponsesLast1000:                   responsesHistory,
 		RequestsLast10:                      requestsLast10,
 		FailedRequestsLast10:                failedRequestsLast10,
-		// TODO: slow_requests_last_10
+		SlowRequestsLast10:                  slowRequestsLast10,
 	}
 
 	c.JSON(http.StatusOK, result)
@@ -140,7 +142,7 @@ func getLast10Requests(history []*responseStatsData) []*requestStatsData {
 				&requestStatsData{
 					Url:        v.url,
 					StatusCode: v.statusCode,
-					Duration:   v.duration,
+					Duration:   getTimeIntervalFormatted(v.duration),
 				})
 		}
 	}

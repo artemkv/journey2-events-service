@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +19,9 @@ func handlePostAction(c *gin.Context) {
 		toBadRequest(c, err)
 		return
 	}
+
+	// TODO: remove, this is for debug
+	time.Sleep(3 * time.Second)
 
 	// TODO: now simply returns input
 	toSuccess(c, action)

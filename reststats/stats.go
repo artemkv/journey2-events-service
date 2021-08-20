@@ -4,6 +4,8 @@ import "time"
 
 var CURIOSITY = 1000
 var CURIOSITY_FAILED = 100
+var CURIOSITY_SLOW = 100
+var SLOW_MS = 100
 var QUICK_SEQUENCE_SIZE = 100
 
 type statsData struct {
@@ -15,6 +17,7 @@ type statsData struct {
 	previousRequestTime      time.Time
 	history                  []*responseStatsData
 	historyOfFailed          []*responseStatsData
+	historyOfSlow            []*responseStatsData
 	shortestSequenceDuration time.Duration
 }
 
@@ -33,6 +36,8 @@ var stats = &statsData{
 	currentRequestTime:       time.Now(),
 	previousRequestTime:      time.Now(),
 	history:                  make([]*responseStatsData, 0, CURIOSITY),
+	historyOfFailed:          make([]*responseStatsData, 0, CURIOSITY_FAILED),
+	historyOfSlow:            make([]*responseStatsData, 0, CURIOSITY_SLOW),
 	shortestSequenceDuration: -1,
 }
 
@@ -65,17 +70,12 @@ func updateResponseStats(start time.Time, url string, statusCode int, duration t
 		duration:   duration,
 	}
 
-	if len(stats.history) == CURIOSITY {
-		stats.history = stats.history[1:]
-	}
-	stats.history = append(stats.history, responseStats)
-
+	stats.history = shiftAndPush(stats.history, responseStats, CURIOSITY)
 	if statusCode >= 400 {
-		if len(stats.historyOfFailed) == CURIOSITY_FAILED {
-			// TODO: study performance implications of this
-			stats.historyOfFailed = stats.historyOfFailed[1:]
-		}
-		stats.historyOfFailed = append(stats.historyOfFailed, responseStats)
+		stats.historyOfFailed = shiftAndPush(stats.historyOfFailed, responseStats, CURIOSITY_FAILED)
+	}
+	if duration >= time.Duration(SLOW_MS)*time.Millisecond {
+		stats.historyOfSlow = shiftAndPush(stats.historyOfSlow, responseStats, CURIOSITY_SLOW)
 	}
 
 	updateCountsByStatusCodeMap(stats.responseStats, statusCode)
@@ -111,4 +111,13 @@ func updateCountsByStatusCodeMap(responseMap map[string]int, statusCode int) {
 	} else {
 		responseMap["1XX"]++
 	}
+}
+
+func shiftAndPush(slice []*responseStatsData, item *responseStatsData, maxLength int) []*responseStatsData {
+	if len(slice) == maxLength {
+		// TODO: study performance implications of this
+		slice = slice[1:]
+	}
+	slice = append(slice, item)
+	return slice
 }
