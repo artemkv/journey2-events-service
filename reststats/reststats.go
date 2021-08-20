@@ -57,6 +57,7 @@ type statsResult struct {
 	RequestsTotal        int                 `json:"requests_total"`
 	RequestsByEndpoint   map[string]int      `json:"requests_by_endpoint"`
 	ResponsesAll         map[string]int      `json:"responses_all"`
+	ResponsesLast1000    map[string]int      `json:"responses_last_1000"`
 	RequestsLast10       []*requestStatsData `json:"requests_last_10"`
 }
 
@@ -70,6 +71,7 @@ func HandleGetStats(c *gin.Context) {
 	stats = getStats()
 	now := time.Now()
 
+	responsesHistory := getResponseHistory(stats.history)
 	requestsLast10 := getLast10Requests(stats.history)
 
 	result := &statsResult{
@@ -80,9 +82,9 @@ func HandleGetStats(c *gin.Context) {
 		RequestsByEndpoint:   stats.requestsByEndpoint,
 		// TODO: last_1000_requests
 		// TODO: shortest_interval_100_requests_received
-		ResponsesAll: stats.responseStats,
-		// TODO: responses_last_1000
-		RequestsLast10: requestsLast10,
+		ResponsesAll:      stats.responseStats,
+		ResponsesLast1000: responsesHistory,
+		RequestsLast10:    requestsLast10,
 		// TODO: failed_requests_last_10
 		// TODO: slow_requests_last_10
 	}
@@ -113,6 +115,14 @@ func getTimeIntervalFormatted(duration time.Duration) string {
 	seconds := math.Floor(diff)
 
 	return fmt.Sprintf("%d.%d:%d:%d", int(days), int(hours), int(minutes), int(seconds))
+}
+
+func getResponseHistory(history []*responseStatsData) map[string]int {
+	responsesHistory := getEmptyCountsByStatusCodeMap()
+	for _, v := range history {
+		updateCountsByStatusCodeMap(responsesHistory, v.statusCode)
+	}
+	return responsesHistory
 }
 
 func getLast10Requests(history []*responseStatsData) []*requestStatsData {

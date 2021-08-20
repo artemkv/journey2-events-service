@@ -22,16 +22,10 @@ type responseStatsData struct {
 }
 
 var stats = &statsData{
-	started:            time.Now(),
-	requestTotal:       0,
-	requestsByEndpoint: map[string]int{},
-	responseStats: map[string]int{
-		"1XX": 0,
-		"2XX": 0,
-		"3XX": 0,
-		"4XX": 0,
-		"5XX": 0,
-	},
+	started:             time.Now(),
+	requestTotal:        0,
+	requestsByEndpoint:  map[string]int{},
+	responseStats:       getEmptyCountsByStatusCodeMap(),
 	currentRequestTime:  time.Now(),
 	previousRequestTime: time.Now(),
 	history:             make([]*responseStatsData, 0, CURIOSITY),
@@ -71,15 +65,29 @@ func updateResponseStats(start time.Time, url string, statusCode int, duration t
 	}
 	stats.history = append(stats.history, responseStats)
 
+	updateCountsByStatusCodeMap(stats.responseStats, statusCode)
+}
+
+func getEmptyCountsByStatusCodeMap() map[string]int {
+	return map[string]int{
+		"1XX": 0,
+		"2XX": 0,
+		"3XX": 0,
+		"4XX": 0,
+		"5XX": 0,
+	}
+}
+
+func updateCountsByStatusCodeMap(responseMap map[string]int, statusCode int) {
 	if statusCode >= 500 {
-		stats.responseStats["5XX"]++
+		responseMap["5XX"]++
 	} else if statusCode >= 400 {
-		stats.responseStats["4XX"]++
+		responseMap["4XX"]++
 	} else if statusCode >= 300 {
-		stats.responseStats["3XX"]++
+		responseMap["3XX"]++
 	} else if statusCode >= 200 {
-		stats.responseStats["2XX"]++
+		responseMap["2XX"]++
 	} else {
-		stats.responseStats["1XX"]++
+		responseMap["1XX"]++
 	}
 }
