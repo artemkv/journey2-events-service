@@ -60,6 +60,7 @@ type statsResult struct {
 	ResponsesAll                        map[string]int      `json:"responses_all"`
 	ResponsesLast1000                   map[string]int      `json:"responses_last_1000"`
 	RequestsLast10                      []*requestStatsData `json:"requests_last_10"`
+	FailedRequestsLast10                []*requestStatsData `json:"failed_requests_last_10"`
 }
 
 type requestStatsData struct {
@@ -74,6 +75,7 @@ func HandleGetStats(c *gin.Context) {
 
 	responsesHistory := getResponseHistory(stats.history)
 	requestsLast10 := getLast10Requests(stats.history)
+	failedRequestsLast10 := getLast10Requests(stats.historyOfFailed)
 
 	result := &statsResult{
 		Version:              version,
@@ -86,7 +88,7 @@ func HandleGetStats(c *gin.Context) {
 		ResponsesAll:                        stats.responseStats,
 		ResponsesLast1000:                   responsesHistory,
 		RequestsLast10:                      requestsLast10,
-		// TODO: failed_requests_last_10
+		FailedRequestsLast10:                failedRequestsLast10,
 		// TODO: slow_requests_last_10
 	}
 

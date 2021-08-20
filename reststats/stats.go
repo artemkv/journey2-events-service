@@ -3,6 +3,7 @@ package reststats
 import "time"
 
 var CURIOSITY = 1000
+var CURIOSITY_FAILED = 100
 var QUICK_SEQUENCE_SIZE = 100
 
 type statsData struct {
@@ -13,6 +14,7 @@ type statsData struct {
 	currentRequestTime       time.Time
 	previousRequestTime      time.Time
 	history                  []*responseStatsData
+	historyOfFailed          []*responseStatsData
 	shortestSequenceDuration time.Duration
 }
 
@@ -67,6 +69,14 @@ func updateResponseStats(start time.Time, url string, statusCode int, duration t
 		stats.history = stats.history[1:]
 	}
 	stats.history = append(stats.history, responseStats)
+
+	if statusCode >= 400 {
+		if len(stats.historyOfFailed) == CURIOSITY_FAILED {
+			// TODO: study performance implications of this
+			stats.historyOfFailed = stats.historyOfFailed[1:]
+		}
+		stats.historyOfFailed = append(stats.historyOfFailed, responseStats)
+	}
 
 	updateCountsByStatusCodeMap(stats.responseStats, statusCode)
 
