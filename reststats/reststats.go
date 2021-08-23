@@ -51,23 +51,31 @@ func RequestCounter() gin.HandlerFunc {
 }
 
 type statsResult struct {
-	Version                             string              `json:"version"`
-	Uptime                              string              `json:"uptime"`
-	TimeSinceLastRequest                string              `json:"time_since_last_request"`
-	RequestsTotal                       int                 `json:"requests_total"`
-	RequestsByEndpoint                  map[string]int      `json:"requests_by_endpoint"`
-	ShortestInterval100RequestsReceived string              `json:"shortest_interval_100_requests_received"`
-	ResponsesAll                        map[string]int      `json:"responses_all"`
-	ResponsesLast1000                   map[string]int      `json:"responses_last_1000"`
-	RequestsLast10                      []*requestStatsData `json:"requests_last_10"`
-	FailedRequestsLast10                []*requestStatsData `json:"failed_requests_last_10"`
-	SlowRequestsLast10                  []*requestStatsData `json:"slow_requests_last_10"`
+	Version                             string                `json:"version"`
+	Uptime                              string                `json:"uptime"`
+	RequestsTotal                       int                   `json:"requests_total"`
+	TimeSinceLastRequest                string                `json:"time_since_last_request"`
+	RequestsByEndpoint                  map[string]int        `json:"requests_by_endpoint"`
+	Last1000Requests                    *last1000RequestsData `json:"last_1000_requests"`
+	ShortestInterval100RequestsReceived string                `json:"shortest_interval_100_requests_received"`
+	ResponsesAll                        map[string]int        `json:"responses_all"`
+	ResponsesLast1000                   map[string]int        `json:"responses_last_1000"`
+	RequestsLast10                      []*requestStatsData   `json:"requests_last_10"`
+	FailedRequestsLast10                []*requestStatsData   `json:"failed_requests_last_10"`
+	SlowRequestsLast10                  []*requestStatsData   `json:"slow_requests_last_10"`
 }
 
 type requestStatsData struct {
 	Url        string `json:"url"`
 	StatusCode int    `json:"statusCode"`
-	Duration   string `json:"duration"`
+	Duration   int64  `json:"duration"`
+}
+
+type last1000RequestsData struct {
+	DoneWithin  string `json:"done_within"`
+	MinDuration int64  `json:"min_duration"`
+	MaxDuration int64  `json:"max_duration"`
+	AvgDuration int64  `json:"avg_duration"`
 }
 
 func HandleGetStats(c *gin.Context) {
@@ -80,12 +88,12 @@ func HandleGetStats(c *gin.Context) {
 	slowRequestsLast10 := getLast10Requests(stats.historyOfSlow)
 
 	result := &statsResult{
-		Version:              version,
-		Uptime:               getTimeDiffFormatted(stats.started, now),
-		TimeSinceLastRequest: getTimeDiffFormatted(stats.previousRequestTime, now),
-		RequestsTotal:        stats.requestTotal,
-		RequestsByEndpoint:   stats.requestsByEndpoint,
-		// TODO: last_1000_requests
+		Version:                             version,
+		Uptime:                              getTimeDiffFormatted(stats.started, now),
+		RequestsTotal:                       stats.requestTotal,
+		TimeSinceLastRequest:                getTimeDiffFormatted(stats.previousRequestTime, now),
+		RequestsByEndpoint:                  stats.requestsByEndpoint,
+		Last1000Requests:                    getLast1000RequestData(stats.history),
 		ShortestInterval100RequestsReceived: getTimeIntervalFormatted(stats.shortestSequenceDuration),
 		ResponsesAll:                        stats.responseStats,
 		ResponsesLast1000:                   responsesHistory,
@@ -142,9 +150,38 @@ func getLast10Requests(history []*responseStatsData) []*requestStatsData {
 				&requestStatsData{
 					Url:        v.url,
 					StatusCode: v.statusCode,
-					Duration:   getTimeIntervalFormatted(v.duration),
+					Duration:   v.duration.Milliseconds(),
 				})
 		}
 	}
 	return requestsLast10
+}
+
+func getLast1000RequestData(history []*responseStatsData) *last1000RequestsData {
+	last1000RequestsWithin := time.Duration(0)
+	var last1000RequestsMinDuration int64 = math.MaxInt64
+	var last1000RequestsMaxDuration int64 = 0
+	var last1000RequestsTotalDuration int64 = 0
+	var last1000RequestsAvgDuration int64 = 0
+
+	if len(history) > 0 {
+		last1000RequestsWithin = time.Since(history[0].time)
+		for _, v := range history {
+			if v.duration.Milliseconds() < last1000RequestsMinDuration {
+				last1000RequestsMinDuration = v.duration.Milliseconds()
+			}
+			if v.duration.Milliseconds() > last1000RequestsMaxDuration {
+				last1000RequestsMaxDuration = v.duration.Milliseconds()
+			}
+			last1000RequestsTotalDuration += v.duration.Milliseconds()
+		}
+		last1000RequestsAvgDuration = last1000RequestsTotalDuration / int64(len(history))
+	}
+
+	return &last1000RequestsData{
+		DoneWithin:  getTimeIntervalFormatted(last1000RequestsWithin),
+		MinDuration: last1000RequestsMinDuration,
+		MaxDuration: last1000RequestsMaxDuration,
+		AvgDuration: last1000RequestsAvgDuration,
+	}
 }
