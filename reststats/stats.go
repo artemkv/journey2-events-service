@@ -45,46 +45,57 @@ func getStats() *statsData {
 	return stats
 }
 
-// TODO: not thread-safe!
-func countRequest() {
-	stats.requestTotal++
-	stats.previousRequestTime = stats.currentRequestTime
-	stats.currentRequestTime = time.Now()
+func startHandlingStats() (chan<- int, chan<- string, chan<- *responseStatsData) {
+	requests := make(chan int)
+	endpoints := make(chan string)
+	responseStats := make(chan *responseStatsData)
+
+	go countRequests(requests)
+	go countRequestsByEndpoint(endpoints)
+	go updateResponseStats(responseStats)
+
+	return requests, endpoints, responseStats
 }
 
-// TODO: not thread-safe!
-func countRequestByEndpoint(endpoint string) {
-	val, ok := stats.requestsByEndpoint[endpoint]
-	if !ok {
-		val = 0
+func countRequests(ch <-chan int) {
+	for {
+		n := <-ch
+		stats.requestTotal += n
+		stats.previousRequestTime = stats.currentRequestTime
+		stats.currentRequestTime = time.Now()
 	}
-	stats.requestsByEndpoint[endpoint] = val + 1
 }
 
-// TODO: not thread-safe!
-func updateResponseStats(start time.Time, url string, statusCode int, duration time.Duration) {
-	responseStats := &responseStatsData{
-		time:       time.Now(),
-		url:        url,
-		statusCode: statusCode,
-		duration:   duration,
+func countRequestsByEndpoint(ch <-chan string) {
+	for {
+		endpoint := <-ch
+		val, ok := stats.requestsByEndpoint[endpoint]
+		if !ok {
+			val = 0
+		}
+		stats.requestsByEndpoint[endpoint] = val + 1
 	}
+}
 
-	stats.history = shiftAndPush(stats.history, responseStats, CURIOSITY)
-	if statusCode >= 400 {
-		stats.historyOfFailed = shiftAndPush(stats.historyOfFailed, responseStats, CURIOSITY_FAILED)
-	}
-	if duration >= time.Duration(SLOW_MS)*time.Millisecond {
-		stats.historyOfSlow = shiftAndPush(stats.historyOfSlow, responseStats, CURIOSITY_SLOW)
-	}
+func updateResponseStats(ch <-chan *responseStatsData) {
+	for {
+		responseStats := <-ch
+		stats.history = shiftAndPush(stats.history, responseStats, CURIOSITY)
+		if responseStats.statusCode >= 400 {
+			stats.historyOfFailed = shiftAndPush(stats.historyOfFailed, responseStats, CURIOSITY_FAILED)
+		}
+		if responseStats.duration >= time.Duration(SLOW_MS)*time.Millisecond {
+			stats.historyOfSlow = shiftAndPush(stats.historyOfSlow, responseStats, CURIOSITY_SLOW)
+		}
 
-	updateCountsByStatusCodeMap(stats.responseStats, statusCode)
+		updateCountsByStatusCodeMap(stats.responseStats, responseStats.statusCode)
 
-	if len(stats.history) >= QUICK_SEQUENCE_SIZE {
-		lastSequenceDuration := stats.history[len(stats.history)-1].time.Sub(
-			stats.history[len(stats.history)-QUICK_SEQUENCE_SIZE].time)
-		if stats.shortestSequenceDuration == -1 || stats.shortestSequenceDuration > lastSequenceDuration {
-			stats.shortestSequenceDuration = lastSequenceDuration
+		if len(stats.history) >= QUICK_SEQUENCE_SIZE {
+			lastSequenceDuration := stats.history[len(stats.history)-1].time.Sub(
+				stats.history[len(stats.history)-QUICK_SEQUENCE_SIZE].time)
+			if stats.shortestSequenceDuration == -1 || stats.shortestSequenceDuration > lastSequenceDuration {
+				stats.shortestSequenceDuration = lastSequenceDuration
+			}
 		}
 	}
 }

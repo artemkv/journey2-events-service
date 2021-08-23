@@ -10,13 +10,18 @@ import (
 )
 
 var version string = ""
+var requestChannel chan<- int
+var endpointChannel chan<- string
+var responseStatsChannel chan<- *responseStatsData
 
-func SetVersion(v string) {
+func Initialize(v string) {
 	version = v
+
+	requestChannel, endpointChannel, responseStatsChannel = startHandlingStats()
 }
 
 func CountRequestByEndpoint(endpoint string) {
-	countRequestByEndpoint(endpoint)
+	endpointChannel <- endpoint
 }
 
 func HandleEndpointWithStats(handler gin.HandlerFunc) gin.HandlerFunc {
@@ -25,8 +30,15 @@ func HandleEndpointWithStats(handler gin.HandlerFunc) gin.HandlerFunc {
 		handler(c)
 		duration := time.Since(start)
 
-		countRequestByEndpoint(c.Request.URL.Path)
-		updateResponseStats(start, c.Request.RequestURI, c.Writer.Status(), duration)
+		endpointChannel <- c.Request.URL.Path
+
+		responseStats := &responseStatsData{
+			time:       start,
+			url:        c.Request.RequestURI,
+			statusCode: c.Writer.Status(),
+			duration:   duration,
+		}
+		responseStatsChannel <- responseStats
 	}
 }
 
@@ -36,17 +48,29 @@ func HandleWithStats(handler gin.HandlerFunc) gin.HandlerFunc {
 		handler(c)
 		duration := time.Since(start)
 
-		updateResponseStats(start, c.Request.RequestURI, c.Writer.Status(), duration)
+		responseStats := &responseStatsData{
+			time:       start,
+			url:        c.Request.RequestURI,
+			statusCode: c.Writer.Status(),
+			duration:   duration,
+		}
+		responseStatsChannel <- responseStats
 	}
 }
 
 func UpdateResponseStatsOnRecover(start time.Time, url string, statusCode int) {
-	updateResponseStats(start, url, statusCode, 0)
+	responseStats := &responseStatsData{
+		time:       start,
+		url:        url,
+		statusCode: statusCode,
+		duration:   0,
+	}
+	responseStatsChannel <- responseStats
 }
 
 func RequestCounter() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		countRequest()
+		requestChannel <- 1
 	}
 }
 

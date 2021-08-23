@@ -28,7 +28,7 @@ func main() {
 	router := gin.New()
 	app.SetupRouter(router)
 
-	reststats.SetVersion(version)
+	reststats.Initialize(version)
 
 	server.Serve(router, port, func() {
 		health.SetIsReadyGlobally()
