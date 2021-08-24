@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +17,12 @@ func handlePostAction(c *gin.Context) {
 	var action actionData
 	if err := c.ShouldBindJSON(&action); err != nil {
 		toBadRequest(c, err)
+		return
+	}
+
+	// TODO: this is temporary solution to avoid high billing
+	if !IsWhitelisted(action.AppId) {
+		toBadRequest(c, fmt.Errorf("invalid aid: %s", action.AppId))
 		return
 	}
 

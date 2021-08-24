@@ -22,9 +22,10 @@ v 1.0 microservice chassis
 v 1.0 business
 -----------------------------------------------
 
+- whitelist application ids
 - enqueue action
 
 backlog
 -----------------------------------------------
 
-- enqueue action
+- enqueue error
