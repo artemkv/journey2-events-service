@@ -50,6 +50,8 @@ func toBadRequest(c *gin.Context, err error) {
 }
 
 func toInternalServerError(c *gin.Context, errText string) {
+	// TODO: when too many internal server errors,
+	// Set liveness to false and exit
 	c.JSON(http.StatusInternalServerError, gin.H{"err": errText})
 }
 

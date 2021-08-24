@@ -25,6 +25,9 @@ func main() {
 	LoadDotEnv()
 	port := GetPort(":8600")
 
+	actionTopicArn := GetActionTopicArn()
+	app.InitSNSConnection(actionTopicArn)
+
 	router := gin.New()
 	app.SetupRouter(router)
 
@@ -49,4 +52,12 @@ func GetPort(def string) string {
 		return def
 	}
 	return port
+}
+
+func GetActionTopicArn() string {
+	arn := os.Getenv("ACTION_TOPIC")
+	if arn == "" {
+		log.Fatalln("Action topic is not configured")
+	}
+	return arn
 }

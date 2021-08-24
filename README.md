@@ -29,6 +29,7 @@ gowatch
 
 ```
 JOURNEY2_PORT=:8600
+ACTION_TOPIC=arn:aws:sns:us-east-1:4739XXXXXXX:journey2-actions
 ```
 
 ## API

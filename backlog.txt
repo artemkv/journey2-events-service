@@ -1,3 +1,6 @@
+v 1.0 microservice chassis
+-----------------------------------------------
+
 - read port from config / env variable
 - proper ceremony for running server
 - graceful shutdown
@@ -9,11 +12,18 @@
 - handle 4XX errors
 - handle 5XX errors
 - logging (successful and failed requests)
-
------------------------------------------------
-
 - update rest stats
     - countRequest
     - countRequestByEndpoint
     - updateResponseStats
 - /stats to get rest stats
+
+v 1.0 business
+-----------------------------------------------
+
+- enqueue action
+
+backlog
+-----------------------------------------------
+
+- enqueue action

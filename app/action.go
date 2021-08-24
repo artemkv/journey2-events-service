@@ -1,8 +1,6 @@
 package app
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,9 +18,11 @@ func handlePostAction(c *gin.Context) {
 		return
 	}
 
-	// TODO: remove, this is for debug
-	time.Sleep(3 * time.Second)
+	msgId, err := EnqueueAction(action)
+	if err != nil {
+		toInternalServerError(c, err.Error())
+		return
+	}
 
-	// TODO: now simply returns input
-	toSuccess(c, action)
+	toSuccess(c, msgId)
 }
