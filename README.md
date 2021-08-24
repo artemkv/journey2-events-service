@@ -29,7 +29,11 @@ gowatch
 
 ```
 JOURNEY2_PORT=:8600
-ACTION_TOPIC=arn:aws:sns:us-east-1:4739XXXXXXX:journey2-actions
+JOURNEY2_ACTION_TOPIC=arn:aws:sns:us-east-1:4739XXXXXXX:journey2-actions
+
+JOURNEY2_TLS=true
+JOURNEY2_CERT_FILE=cert.pem
+JOURNEY2_KEY_FILE=key.unencrypted.pem
 ```
 
 ## API

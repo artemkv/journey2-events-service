@@ -12,8 +12,7 @@ var baseUrl string
 var port string
 
 func init() {
-	LoadDotEnv()
-	port = GetPort(":8600")
+	port = GetOptionalString("JOURNEY2_PORT", ":8600")
 	baseUrl = fmt.Sprintf("http://127.0.0.1%s", port)
 }
 

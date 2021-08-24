@@ -17,6 +17,7 @@ v 1.0 microservice chassis
     - countRequestByEndpoint
     - updateResponseStats
 - /stats to get rest stats
+- support TLS with custom certificate
 
 v 1.0 business
 -----------------------------------------------
