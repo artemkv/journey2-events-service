@@ -28,4 +28,6 @@ v 1.0 business
 backlog
 -----------------------------------------------
 
+- define good treshold for slow requests
+- make sure make file works
 - enqueue error
