@@ -19,7 +19,7 @@ type actionOutgoingData struct {
 	UserId string `json:"uid" binding:"required"`
 	Action string `json:"act" binding:"required"`
 	Param  string `json:"par"`
-	Date   string `json:"dta"`
+	Date   string `json:"dts"`
 }
 
 func handlePostAction(c *gin.Context) {
