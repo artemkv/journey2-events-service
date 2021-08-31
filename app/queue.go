@@ -49,7 +49,7 @@ func getSession() *session.Session {
 	return sess
 }
 
-func EnqueueAction(action actionData) (string, error) {
+func EnqueueAction(action *actionOutgoingData) (string, error) {
 	svc := sns.New(getSession())
 
 	// serialize action

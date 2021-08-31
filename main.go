@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var version = "1.0"
+var version = "1.1"
 
 func main() {
 	// setup logging
