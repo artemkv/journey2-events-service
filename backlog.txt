@@ -32,6 +32,8 @@ v 1.2
 backlog
 -----------------------------------------------
 
+- send dts with UTC offset
 - define good treshold for slow requests
 - make sure make file works
 - enqueue error
+- migrate to sdk-go-v2 (https://aws.github.io/aws-sdk-go-v2/docs/migrating/)
