@@ -8,6 +8,7 @@ import (
 )
 
 type actionIncomingData struct {
+	AccId  string `json:"acc" binding:"required"`
 	AppId  string `json:"aid" binding:"required"`
 	UserId string `json:"uid" binding:"required"`
 	Action string `json:"act" binding:"required"`
@@ -15,6 +16,7 @@ type actionIncomingData struct {
 }
 
 type actionOutgoingData struct {
+	AccId  string `json:"acc" binding:"required"`
 	AppId  string `json:"aid" binding:"required"`
 	UserId string `json:"uid" binding:"required"`
 	Action string `json:"act" binding:"required"`
@@ -48,10 +50,11 @@ func handlePostAction(c *gin.Context) {
 
 func constructActionOut(actionIn *actionIncomingData) *actionOutgoingData {
 	return &actionOutgoingData{
+		AccId:  actionIn.AccId,
 		AppId:  actionIn.AppId,
 		UserId: actionIn.UserId,
 		Action: actionIn.Action,
 		Param:  actionIn.Param,
-		Date:   time.Now().Format(time.RFC3339),
+		Date:   time.Now().UTC().Format(time.RFC3339),
 	}
 }
